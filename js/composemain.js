@@ -490,6 +490,266 @@ function createExportPanel() {
 }
 
 
+function createMidiImportPanel($div, idPrefix) {
+    idPrefix = idPrefix || "midiImport";
+    $div.empty();
+
+    let latest = {
+        fileName: null,
+        analysis: null,
+        genInfo: null,
+        preset: null,
+        seed: null
+    };
+
+    let content = "";
+    content += "<div class=\"midi-import-panel\" >";
+    content += "<p>Upload a .mid/.midi file to derive a preset (tempo / time signature / key + a rough instrument-type guess).</p>";
+    content += "<div style=\"margin: 0.5em 0;\" >";
+    content += "  <label for=\"" + idPrefix + "FormSelect\" style=\"margin-right: 0.5em;\" >Form mode</label>";
+    content += "  <select id=\"" + idPrefix + "FormSelect\" >";
+    content += "    <option value=\"auto\" selected=\"selected\" >Auto (recommended)</option>";
+    content += "    <option value=\"loop\" >Loop / Monotone (no chorus)</option>";
+    content += "    <option value=\"verseChorus\" >Verse / Chorus</option>";
+    content += "    <option value=\"build\" >Build</option>";
+    content += "  </select>";
+    content += "</div>";
+    content += "<input type=\"file\" id=\"" + idPrefix + "FileInput\" accept=\".mid,.midi,audio/midi,audio/x-midi\" />";
+    content += "<div style=\"margin-top: 0.75em;\" >";
+    content += "  <button id=\"" + idPrefix + "ApplyButton\" disabled=\"disabled\" >Apply To Song Settings</button>";
+    content += "  <button id=\"" + idPrefix + "DownloadButton\" disabled=\"disabled\" style=\"margin-left: 0.5em;\" >Download Preset JSON</button>";
+    content += "</div>";
+    content += "<div id=\"" + idPrefix + "ResultDiv\" style=\"margin-top: 0.75em; font-size: 0.95em;\" ></div>";
+    content += "</div>";
+
+    $div.append($(content));
+
+    const $fileInput = $("#" + idPrefix + "FileInput");
+    const $formSelect = $("#" + idPrefix + "FormSelect");
+    const $applyButton = $("#" + idPrefix + "ApplyButton");
+    const $downloadButton = $("#" + idPrefix + "DownloadButton");
+    const $resultDiv = $("#" + idPrefix + "ResultDiv");
+
+    function setButtonsEnabled(enabled) {
+        $applyButton.button("option", "disabled", !enabled);
+        $downloadButton.button("option", "disabled", !enabled);
+    }
+
+    function yyyymmddSeed() {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = (d.getMonth() + 1);
+        const day = d.getDate();
+        return (y * 10000) + (m * 100) + day;
+    }
+
+    function showError(err) {
+        const msg = (err && err.message) ? err.message : ("" + err);
+        $resultDiv.empty();
+        $resultDiv.append($("<div style=\"color: #a00;\" />").text("Failed to read MIDI: " + msg));
+        latest = { fileName: null, analysis: null, genInfo: null, preset: null };
+        setButtonsEnabled(false);
+    }
+
+    function analyzeFile(file) {
+        if (!file) {
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onerror = () => showError(reader.error || new Error("FileReader error"));
+        reader.onload = () => {
+            try {
+                const arrayBuffer = reader.result;
+                const parsed = MidiImport.parseSmf(arrayBuffer);
+                const analysis = MidiImport.analyzeMergedEvents(parsed.mergedEvents, { midiDivisions: parsed.midiData.midiDivisions });
+                const seed = yyyymmddSeed();
+
+                latest.fileName = file.name;
+                latest.analysis = analysis;
+                latest.seed = seed;
+
+                const summaryLines = MidiImport.summarizeAnalysis(analysis);
+
+                $resultDiv.empty();
+                if (summaryLines.length) {
+                    const $ul = $("<ul />");
+                    for (const line of summaryLines) {
+                        $ul.append($("<li />").text(line));
+                    }
+                    $resultDiv.append($ul);
+                } else {
+                    $resultDiv.append($("<div />").text("Parsed MIDI, but no tempo/time-signature/key metadata was found."));
+                }
+
+                setButtonsEnabled(true);
+            } catch (e) {
+                showError(e);
+            }
+        };
+
+        reader.readAsArrayBuffer(file);
+    }
+
+    $applyButton.button().click(() => {
+        if (!latest || !latest.analysis) {
+            return;
+        }
+        const formMode = $formSelect.val() || "auto";
+        const genInfo = MidiImport.analysisToGenInfo(latest.analysis, { formMode: formMode });
+        const preset = MidiImport.createPresetObject(genInfo, { seed: latest.seed || yyyymmddSeed() });
+
+        const newSongSettings = {
+            name: latest.fileName ? ("MIDI: " + latest.fileName) : "MIDI Import",
+            seed: "" + preset.seed
+        };
+        updateSongSettingsComponent(genInfo, newSongSettings);
+        settingsDirty = true;
+        setSongSettingsDirty(true);
+        showModalDialog("Applied", "<p>Applied extracted settings to Song Settings.</p>");
+    });
+
+    $downloadButton.button().click(() => {
+        if (!latest || !latest.analysis) {
+            return;
+        }
+        const formMode = $formSelect.val() || "auto";
+        const genInfo = MidiImport.analysisToGenInfo(latest.analysis, { formMode: formMode });
+        const preset = MidiImport.createPresetObject(genInfo, { seed: latest.seed || yyyymmddSeed() });
+        const baseName = latest.fileName ? latest.fileName.replace(/\.[^.]+$/, "") : "midi";
+        MidiImport.downloadJsonObject(preset, baseName + "_preset.json");
+    });
+
+    $applyButton.button({ disabled: true });
+    $downloadButton.button({ disabled: true });
+
+    $fileInput.on("change", () => {
+        const file = $fileInput[0].files && $fileInput[0].files[0];
+        analyzeFile(file);
+    });
+}
+
+
+function createPresetJsonImportPanel($div, idPrefix) {
+    idPrefix = idPrefix || "presetJson";
+    $div.empty();
+
+    let latest = {
+        fileName: null,
+        parsed: null
+    };
+
+    let content = "";
+    content += "<div class=\"preset-json-import-panel\" >";
+    content += "<p>Load a JSON preset from disk. Supports both preset JSON ({seed, genInfo}) and full song JSON exports ({seed, genInfo, renderData,...}).</p>";
+    content += "<input type=\"file\" id=\"" + idPrefix + "FileInput\" accept=\"application/json,.json\" />";
+    content += "<div style=\"margin-top: 0.75em;\" >";
+    content += "  <button id=\"" + idPrefix + "ApplyButton\" disabled=\"disabled\" >Apply To Song Settings</button>";
+    content += "</div>";
+    content += "<div id=\"" + idPrefix + "ResultDiv\" style=\"margin-top: 0.75em; font-size: 0.95em;\" ></div>";
+    content += "</div>";
+
+    $div.append($(content));
+
+    const $fileInput = $("#" + idPrefix + "FileInput");
+    const $applyButton = $("#" + idPrefix + "ApplyButton");
+    const $resultDiv = $("#" + idPrefix + "ResultDiv");
+
+    function setEnabled(enabled) {
+        $applyButton.button("option", "disabled", !enabled);
+    }
+
+    function showError(err) {
+        const msg = (err && err.message) ? err.message : ("" + err);
+        $resultDiv.empty();
+        $resultDiv.append($("<div style=\"color: #a00;\" />").text("Failed to read JSON: " + msg));
+        latest = { fileName: null, parsed: null };
+        setEnabled(false);
+    }
+
+    function showSummary(obj) {
+        const lines = [];
+        const hasGenInfo = !!(obj && obj.genInfo);
+        const hasRender = !!(obj && obj.renderData && obj.channelMaps);
+        const seed = (obj && typeof obj.seed !== 'undefined') ? obj.seed : null;
+        lines.push("Contains genInfo: " + (hasGenInfo ? "yes" : "no"));
+        lines.push("Contains rendered data: " + (hasRender ? "yes" : "no"));
+        if (seed != null) {
+            lines.push("Seed: " + seed);
+        }
+
+        $resultDiv.empty();
+        const $ul = $("<ul />");
+        for (const l of lines) {
+            $ul.append($("<li />").text(l));
+        }
+        $resultDiv.append($ul);
+    }
+
+    function readFile(file) {
+        if (!file) {
+            return;
+        }
+        const reader = new FileReader();
+        reader.onerror = () => showError(reader.error || new Error("FileReader error"));
+        reader.onload = () => {
+            try {
+                const text = reader.result;
+                const obj = JSON.parse(text);
+                latest.fileName = file.name;
+                latest.parsed = obj;
+                showSummary(obj);
+
+                // Enable apply if it looks like either {genInfo:...} or a raw genInfo object.
+                const looksValid = !!(obj && (obj.genInfo || obj.tempoRange || obj.majorScaleLikelihood || obj._constructorName === "GenInfo"));
+                setEnabled(looksValid);
+            } catch (e) {
+                showError(e);
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    $applyButton.button({ disabled: true }).click(() => {
+        if (!latest || !latest.parsed) {
+            return;
+        }
+        const obj = latest.parsed;
+        const name = latest.fileName ? ("Preset: " + latest.fileName) : "Preset";
+        applyLoadedSongObject(obj, {name: name, autoRender: false});
+        showModalDialog("Applied", "<p>Applied JSON preset to Song Settings.</p>");
+    });
+
+    $fileInput.on("change", () => {
+        const file = $fileInput[0].files && $fileInput[0].files[0];
+        readFile(file);
+    });
+}
+
+
+function createSongImportToolsPanel() {
+    const $songTab = $("#songSettingsTab0");
+    if (!$songTab.length) {
+        return;
+    }
+
+    $("#songToolsPanel").remove();
+
+    const $tools = $(
+        "<div id=\"songToolsPanel\" style=\"margin-bottom: 1em;\" >" +
+        "  <h3 style=\"margin: 0.3em 0;\" >Import</h3>" +
+        "  <div id=\"songToolsPresetImport\" style=\"margin-bottom: 1em; padding-bottom: 0.5em; border-bottom: 1px solid #ddd;\" ></div>" +
+        "  <div id=\"songToolsMidiImport\" ></div>" +
+        "</div>"
+    );
+
+    $songTab.prepend($tools);
+
+    createPresetJsonImportPanel($("#songToolsPresetImport"), "songPresetImport");
+    createMidiImportPanel($("#songToolsMidiImport"), "songMidiImport");
+}
+
+
 function createSongInfoPanel() {
     const $songInfoDiv = $("#songInfoTabs");
     $songInfoDiv.tabs();
@@ -744,6 +1004,43 @@ function updateSongSettingsComponent(genInfo, newSongSettings) {
 
 }
 
+
+function applyLoadedSongObject(response, options) {
+    options = options || {};
+    if (!response) {
+        return;
+    }
+
+    // Support both full song JSON ({seed, genInfo, ...}) and raw genInfo JSON.
+    const genInfo = response.genInfo ? response.genInfo : response;
+    const seed = (typeof response.seed !== 'undefined') ? response.seed : getMainSeed();
+    const name = getValueOrDefault(options, "name", "Song");
+
+    updateSongSettingsComponent(genInfo, {name: name, seed: "" + seed});
+
+    if (response.channelMaps && response.renderData) {
+        // Presets with rendered data
+        stopSong();
+        renderStorage.channelMaps = response.channelMaps;
+        renderStorage.renderData = response.renderData;
+        renderStorage.renderDataLength = Math.max(1, response.renderDataLength);
+        renderStorage.dirty = true;
+        settingsDirty = true;
+        visualizer.resetRenderData();
+        visualizer.addRenderData(renderStorage.renderData, renderStorage.renderDataLength);
+        setSongSettingsDirty(false);
+    } else {
+        settingsDirty = true;
+        // The loaded song contains settings but no rendered data; mark dirty so Play triggers a render.
+        setSongSettingsDirty(true);
+        if (loggedIn && getValueOrDefault(options, "autoRender", false)) {
+            renderSong(() => {
+                stopSong();
+            });
+        }
+    }
+}
+
 function loadSong(prefix, songInfo, force) {
 
     function loadTheSongNow() {
@@ -755,34 +1052,7 @@ function loadSong(prefix, songInfo, force) {
                 if (textStatus == "success") {
                     const response = $.parseJSON(jqXhr.responseText);
                     if (response) {
-//                            logit(response);
-                        const genInfo = response.genInfo;
-                        const newSongSettings = {name: songInfo.name || "Song", seed: "" + response.seed};
-                        // Copy all those properties that are missing from the default GenInfo
-                        // This happens when new properties are added and loading an old song
-
-                        updateSongSettingsComponent(genInfo, newSongSettings);
-                        if (response.channelMaps && response.renderData) {
-                            // Presets
-                            stopSong();
-                            renderStorage.channelMaps = response.channelMaps;
-                            renderStorage.renderData = response.renderData;
-                            renderStorage.renderDataLength = Math.max(1, response.renderDataLength);
-                            renderStorage.dirty = true;
-                            settingsDirty = true;
-                            visualizer.resetRenderData();
-                            visualizer.addRenderData(renderStorage.renderData, renderStorage.renderDataLength);
-                            setSongSettingsDirty(false);
-                        } else {
-                            settingsDirty = true;
-                            // The loaded song contains settings but no rendered data; mark dirty so Play triggers a render.
-                            setSongSettingsDirty(true);
-                            if (loggedIn) {
-                                renderSong(() => {
-                                    stopSong();
-                                });
-                            }
-                        }
+                        applyLoadedSongObject(response, {name: songInfo.name || "Song", autoRender: true});
 
                     }
                 } else {
@@ -1255,29 +1525,6 @@ function createAccountPanel() {
 
 }
 
-function createTutorialsPanel() {
-
-    const $tutorialTabs = $("#tutorialtabs");
-
-    const arr = ['<ul>'];
-
-
-    arr.push('<li><a href="tutorials/info.html">Info</a></li>');
-
-    for (let i=1; i<=5; i++) {
-        arr.push('<li><a href="tutorials/tutorial_' + i + '.html">Tutorial ' + i + '</a></li>');
-    }
-//    <li><a href="tutorials/tutorial_1.html">Tutorial 1</a></li>
-
-    arr.push('</ul>');
-
-    $tutorialTabs.append($(arr.join("")));
-
-    $tutorialTabs.tabs();
-
-
-}
-
 function createPlayerPanel() {
 
     const $playerDialog = $("#playerDialogDiv");
@@ -1740,6 +1987,7 @@ function composeSetup1() {
 
 function composeSetup2() {
     songSettingsCompInfo = createSongSettingsPanel();
+    createSongImportToolsPanel();
     setTimeout(composeSetup3, loaderTimeout);
     updateLoaderProgress(80);
 }
@@ -1751,7 +1999,6 @@ function composeSetup3() {
     createSongInfoPanel();
     createPlayerPanel();
     createAccountPanel();
-    createTutorialsPanel();
 
     $("#helpTabs").tabs();
 
@@ -1775,10 +2022,10 @@ function composeSetup4() {
         });
     }
 
-    const dialogs = ["songSettings", "songInfo", "player", "visualizerSettings", "tutorials", "songs", "export", "help", "feedback", "account"];
-    const captions = ["Song Settings" , "Song Info", "Player", "Visual Settings", "Tutorials", "Songs", "Export", "Help/Credits", "Feedback", "Account"];
-    const widths = ["60em", "60em", Modernizr.webaudio ? "45em" : null, "45em", "55em", "45em", "45em", "50em", lightServerMode ? null : "45em", lightServerMode ? null : "40em"];
-    const ats = ["right", "right top", "right", "top", "left", "top", "top", "left", "left", "left"];
+    const dialogs = ["songSettings", "songInfo", "player", "visualizerSettings", "songs", "export", "help", "feedback", "account"];
+    const captions = ["Song Settings" , "Song Info", "Player", "Visual Settings", "Songs", "Export", "Help/Credits", "Feedback", "Account"];
+    const widths = ["60em", "60em", Modernizr.webaudio ? "45em" : null, "45em", "45em", "45em", "50em", lightServerMode ? null : "45em", lightServerMode ? null : "40em"];
+    const ats = ["right", "right top", "right", "top", "top", "top", "left", "left", "left"];
 
     for (let i=0; i<dialogs.length; i++) {
 
@@ -1794,8 +2041,32 @@ function composeSetup4() {
         }
     }
 
-    $refreshButton = $('<button style="margin-left: 1em;">Compose</button>');
+    // Always-visible transport controls (mirrors the Player dialog buttons)
     const $buttonsDiv = $("#buttonsDiv");
+    const $transport = $(
+        '<span id="transportButtons" style="margin-left: 1em;">' +
+        '  <button id="transportRewindButton" title="Rewind">Rewind</button>' +
+        '  <button id="transportPlayButton" title="Play/Pause" style="margin-left: 0.2em;">Play</button>' +
+        '  <button id="transportStopButton" title="Stop" style="margin-left: 0.2em;">Stop</button>' +
+        '  <button id="transportForwardButton" title="Forward" style="margin-left: 0.2em;">Forward</button>' +
+        '</span>'
+    );
+    $buttonsDiv.append($transport);
+
+    $("#transportRewindButton").button({ text: false, icons: { primary: "ui-icon-seek-prev" } }).click(() => {
+        $("#warewindbutton").click();
+    });
+    $("#transportPlayButton").button({ text: false, icons: { primary: "ui-icon-play" } }).click(() => {
+        $("#waplaybutton").click();
+    });
+    $("#transportStopButton").button({ text: false, icons: { primary: "ui-icon-stop" } }).click(() => {
+        $("#wastopbutton").click();
+    });
+    $("#transportForwardButton").button({ text: false, icons: { primary: "ui-icon-seek-next" } }).click(() => {
+        $("#waforwardbutton").click();
+    });
+
+    $refreshButton = $('<button style="margin-left: 1em;">Compose</button>');
     $buttonsDiv.append($refreshButton);
     $refreshButton.button({
             icons: {
