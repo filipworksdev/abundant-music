@@ -1,0 +1,73 @@
+{
+  "seed": 20260116,
+  "genInfo": {
+    "minorScaleLikelihood": 10,
+    "majorScaleLikelihood": 0.1,
+
+    "tempoRange": [45, 90],
+
+    "timeSignature4Likelihood": 10,
+    "timeSignature3Likelihood": 2,
+    "timeSignature2Likelihood": 0.05,
+
+    "acousticLikelihood": 6,
+    "electricLikelihood": 1.5,
+    "electronicLikelihood": 0.15,
+
+    "percussionVolumeMultiplier": 0.18,
+
+    "melodyReverbSends": [0.95],
+    "melodyChorusSends": [0.4],
+    "inner1ReverbSends": [0.95],
+    "inner1ChorusSends": [0.35],
+    "inner2ReverbSends": [0.95],
+    "inner2ChorusSends": [0.35],
+    "bassReverbSends": [0.8],
+    "bassChorusSends": [0.25],
+    "percussionReverbSend": 0.6,
+    "percussionChorusSend": 0.25,
+
+    "songIntroProbability": 0.95,
+    "songEndProbability": 0.85,
+
+    "useNaturalTempoChanges": false,
+    "endSongTempoChangeProbability": 0.0,
+    "endPhraseGroupTempoChangeProbabilities": [0.0],
+
+    "modulateLikelihoodMultiplier": 0.08,
+    "oddHarmonyRythmProbability": 0.0,
+
+    "soundFontType": 1,
+
+    "acousticMelodyInstrInfos": [
+      {"data": 73, "likelihood": 3, "active": true, "_constructorName": "MidiProgramDataSample"},
+      {"data": 68, "likelihood": 3, "active": true, "_constructorName": "MidiProgramDataSample"},
+      {"data": 20, "likelihood": 2, "active": true, "_constructorName": "MidiProgramDataSample"},
+      {"data": 80, "likelihood": 1, "active": true, "_constructorName": "MidiProgramDataSample"},
+      {"data": 6, "likelihood": 1, "active": true, "_constructorName": "MidiProgramDataSample"},
+      {"data": 13, "likelihood": 0.7, "active": true, "_constructorName": "MidiProgramDataSample"},
+      {"data": 9, "likelihood": 0.3, "active": true, "_constructorName": "MidiProgramDataSample"}
+    ],
+    "acousticInnerSlowInstrInfos": [
+      {"data": 19, "likelihood": 4, "active": true, "_constructorName": "MidiProgramDataSample"},
+      {"data": 48, "likelihood": 3, "active": true, "_constructorName": "MidiProgramDataSample"},
+      {"data": 52, "likelihood": 3, "active": true, "_constructorName": "MidiProgramDataSample"},
+      {"data": 89, "likelihood": 2, "active": true, "_constructorName": "MidiProgramDataSample"},
+      {"data": 20, "likelihood": 2, "active": true, "_constructorName": "MidiProgramDataSample"},
+      {"data": 6, "likelihood": 1, "active": true, "_constructorName": "MidiProgramDataSample"}
+    ],
+    "acousticBassInstrInfos": [
+      {"data": 19, "likelihood": 4, "active": true, "_constructorName": "MidiProgramDataSample"},
+      {"data": 39, "likelihood": 2, "active": true, "_constructorName": "MidiProgramDataSample"},
+      {"data": 32, "likelihood": 1, "active": true, "_constructorName": "MidiProgramDataSample"}
+    ],
+    "electricBassInstrInfos": [
+      {"data": 39, "likelihood": 4, "active": true, "_constructorName": "MidiProgramDataSample"},
+      {"data": 33, "likelihood": 1, "active": true, "_constructorName": "MidiProgramDataSample"}
+    ],
+    "electronicInnerSlowInstrInfos": [
+      {"data": 89, "likelihood": 3, "active": true, "_constructorName": "MidiProgramDataSample"},
+      {"data": 90, "likelihood": 1, "active": true, "_constructorName": "MidiProgramDataSample"}
+    ]
+  }
+}

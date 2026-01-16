@@ -1,3 +1,14 @@
+class RenderAmountStrengthMap {
+    constructor() {
+        this.veryWeak = [0.02];
+        this.weak = [0.15];
+        this.medium = [0.4];
+        this.strong = [0.7];
+        this.veryStrong = [1.0];
+        this._constructorName = "RenderAmountStrengthMap";
+    }
+}
+
 
 class GenInfo {
     constructor() {

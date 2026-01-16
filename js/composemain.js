@@ -775,7 +775,8 @@ function loadSong(prefix, songInfo, force) {
                             setSongSettingsDirty(false);
                         } else {
                             settingsDirty = true;
-                            setSongSettingsDirty(false);
+                            // The loaded song contains settings but no rendered data; mark dirty so Play triggers a render.
+                            setSongSettingsDirty(true);
                             if (loggedIn) {
                                 renderSong(() => {
                                     stopSong();
