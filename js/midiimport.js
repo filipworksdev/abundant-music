@@ -865,6 +865,48 @@ const MidiImport = (() => {
         options = options || {};
         const genInfo = {};
 
+        function canCreateSongPartInfos() {
+            return (typeof SongPartStructureInfo !== 'undefined') &&
+                (typeof SongPartType !== 'undefined') &&
+                (typeof SongPartStrength !== 'undefined');
+        }
+
+        function indicatorToSongPartType(ind) {
+            switch (ind) {
+                case "verse1": return SongPartType.VERSE_1;
+                case "verse2": return SongPartType.VERSE_2;
+                case "chorus1": return SongPartType.CHORUS_1;
+                case "chorus2": return SongPartType.CHORUS_2;
+                case "bridge1": return SongPartType.BRIDGE_1;
+                case "bridge2": return SongPartType.BRIDGE_2;
+                case "misc1": return SongPartType.MISC_1;
+                case "misc2": return SongPartType.MISC_2;
+            }
+            return SongPartType.VERSE_1;
+        }
+
+        function makeSongPartStructureInfo(indicator, strength) {
+            const info = new SongPartStructureInfo({strength: strength});
+            info.partType = indicatorToSongPartType(indicator);
+            return info;
+        }
+
+        function makeSongPartStructureInfoDataSample(indicators) {
+            if (!canCreateSongPartInfos()) {
+                return null;
+            }
+            const parts = [];
+            for (const ind of indicators) {
+                parts.push(makeSongPartStructureInfo(ind, SongPartStrength.MEDIUM));
+            }
+            return {
+                data: parts,
+                likelihood: 100,
+                active: true,
+                _constructorName: "SongPartStructureInfoDataSample"
+            };
+        }
+
         // Tempo
         if (analysis.bpm && isFinite(analysis.bpm)) {
             const bpm = clamp(analysis.bpm, 10, 500);
@@ -980,14 +1022,11 @@ const MidiImport = (() => {
             genInfo.songEndProbability = 0.0;
 
             // Hard override: repeated Verse parts only (avoid chorus entirely).
-            genInfo.overwriteSongPartStructureRndInfos = true;
-            genInfo.songPartStructureRndInfos = [
-                {
-                    data: [["verse1"], ["verse1"], ["verse1"], ["verse1"], ["verse1"], ["verse1"]],
-                    likelihood: 100,
-                    _constructorName: "SongPartStructureInfoDataSample"
-                }
-            ];
+            const loopSample = makeSongPartStructureInfoDataSample(["verse1", "verse1", "verse1", "verse1", "verse1", "verse1"]);
+            if (loopSample) {
+                genInfo.overwriteSongPartStructureRndInfos = true;
+                genInfo.songPartStructureRndInfos = [loopSample];
+            }
         }
 
         // If melody is weak in at least one section, raise chance of no-melody part.
@@ -1061,25 +1100,22 @@ const MidiImport = (() => {
                 return (lbl === bestLabel) ? "chorus1" : "verse1";
             }
 
-            const partSeq = [];
+            const indicators = [];
             // Build a part sequence in chronological order; collapse consecutive same-type.
             const ordered = analysis.sections.slice().sort((a, b) => a.startBar - b.startBar);
             for (const s of ordered) {
                 const part = labelToPart(s.label);
-                if (!partSeq.length || partSeq[partSeq.length - 1][0] !== part) {
-                    partSeq.push([part]);
+                if (!indicators.length || indicators[indicators.length - 1] !== part) {
+                    indicators.push(part);
                 }
             }
 
-            if (partSeq.length >= 2) {
-                genInfo.overwriteSongPartStructureRndInfos = true;
-                genInfo.songPartStructureRndInfos = [
-                    {
-                        data: partSeq,
-                        likelihood: 100,
-                        _constructorName: "SongPartStructureInfoDataSample"
-                    }
-                ];
+            if (indicators.length >= 2) {
+                const vcSample = makeSongPartStructureInfoDataSample(indicators);
+                if (vcSample) {
+                    genInfo.overwriteSongPartStructureRndInfos = true;
+                    genInfo.songPartStructureRndInfos = [vcSample];
+                }
             }
         }
 
