@@ -41,6 +41,10 @@ const DynamicHarmonyModulationTarget = {
 
     getScaleType: function(scaleType, modulationTarget, invertType) {
         const otherScaleType = scaleType == ScaleType.MAJOR ? ScaleType.NATURAL_MINOR : ScaleType.MAJOR;
+        // If we are in a minor-family scale/mode, treat it as minor for the major<->minor toggle.
+        // This preserves historical behavior for MAJOR/NATURAL_MINOR while also supporting DORIAN/PHRYGIAN/etc.
+        const isMinor = ScaleType.isMinorMode(scaleType) || scaleType == ScaleType.NATURAL_MINOR;
+        const normalizedOtherScaleType = isMinor ? ScaleType.MAJOR : ScaleType.NATURAL_MINOR;
 
         switch (modulationTarget) {
             case DynamicHarmonyModulationTarget.SUPERTONIC:
@@ -49,7 +53,7 @@ const DynamicHarmonyModulationTarget = {
             case DynamicHarmonyModulationTarget.SUBTONIC:
                 return invertType ? scaleType : otherScaleType;
         }
-        return invertType ? otherScaleType : scaleType;
+            return invertType ? normalizedOtherScaleType : scaleType;
     },
 
     toString: function(type) {

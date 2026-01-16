@@ -1,8 +1,11 @@
 {
   "seed": 20260116,
   "genInfo": {
-    "minorScaleLikelihood": 10,
-    "majorScaleLikelihood": 0.1,
+    "minorScaleLikelihood": 6,
+    "majorScaleLikelihood": 0.05,
+    "harmonicMinorScaleLikelihood": 2.5,
+    "dorianScaleLikelihood": 1.5,
+    "phrygianScaleLikelihood": 1.0,
 
     "tempoRange": [45, 90],
 

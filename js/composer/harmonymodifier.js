@@ -372,8 +372,10 @@ class ModeMixtureHarmonyModifier extends HarmonyModifier {
             case ScaleType.MAJOR:
                 this.modify(index, elements, module, this.majorFromRoots, this.majorRoots, this.majorNewScaleTypes[index % this.majorNewScaleTypes.length]);
                 break;
-            case ScaleType.NATURAL_MINOR:
-                this.modify(index, elements, module, this.minorFromRoots, this.minorRoots, this.minorNewScaleTypes[index % this.minorNewScaleTypes.length]);
+            default:
+                if (ScaleType.isMinorMode(element.scaleType)) {
+                    this.modify(index, elements, module, this.minorFromRoots, this.minorRoots, this.minorNewScaleTypes[index % this.minorNewScaleTypes.length]);
+                }
                 break;
         }
     }

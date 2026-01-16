@@ -320,7 +320,7 @@ class DynamicHarmonyGenerator extends HarmonyGenerator{
         const result = [];
         const likelihoods = [];
         const costs = [];
-        const isMinor = this.scaleType == ScaleType.NATURAL_MINOR;
+        const isMinor = ScaleType.isMinorMode(this.scaleType);
         let startRoots = isMinor ? this.minorStartRoots : this.majorStartRoots;
         if (startRoots.length == 0) {
             startRoots = [0];
@@ -443,7 +443,7 @@ class DynamicHarmonyGenerator extends HarmonyGenerator{
         return new RandomDfsStateIterator2(result, likelihoods, costs, this.rnd);
     }
     isGoalState(state) {
-        const isMinor = state.harmony.scaleType == ScaleType.NATURAL_MINOR;
+        const isMinor = ScaleType.isMinorMode(state.harmony.scaleType);
         switch (state.mode) {
             case DynamicHarmonyMode.ROOT_MODULATION:
             case DynamicHarmonyMode.NEIGHBOUR_MODULATION:
@@ -504,7 +504,7 @@ class DynamicHarmonyGenerator extends HarmonyGenerator{
         return false;
     }
     getAppliedChordsAndLikelihoods(node, possiblePitchClasses, pitchClassLikelihoods, pitchClassCosts, scaleBaseNote, scaleType, states, likelihoods, costs) {
-        const isMinor = scaleType == ScaleType.NATURAL_MINOR;
+        const isMinor = ScaleType.isMinorMode(scaleType);
         const appliedChordTypes = isMinor ? this.minorAppliedChords : this.majorAppliedChords;
         const appliedChordLikelihoods = isMinor ? this.minorAppliedChordLikelihoods : this.majorAppliedChordLikelihoods;
         const appliedChordCosts = isMinor ? this.minorAppliedChordCosts : this.majorAppliedChordCosts;
@@ -659,7 +659,8 @@ class DynamicHarmonyGenerator extends HarmonyGenerator{
             nextCosts.push(this.repeatRootCost);
         }
         const currentHarmony = node.state.harmony;
-        const isMinor = currentHarmony.scaleType == ScaleType.NATURAL_MINOR;
+        const currentChordRoot = currentHarmony.getChordRootScaleIndex();
+        const isMinor = ScaleType.isMinorMode(currentHarmony.scaleType);
         const scale = currentHarmony.getScale();
         const possiblePitchClasses = []; // Is this even used?
         if (this.expansionLikelihood > 0 && currentHarmony.chordInversions == 0) {
@@ -675,7 +676,6 @@ class DynamicHarmonyGenerator extends HarmonyGenerator{
             const rootLikelihoods = [];
             const rootCosts = [];
             const rootStates = [];
-            const currentChordRoot = currentHarmony.getChordRootScaleIndex();
             let rootsArr = isMinor ? this.minorProgressionRoots : this.majorProgressionRoots;
             let movementsArr = isMinor ? this.minorProgressionMovements : this.majorProgressionMovements;
             if (movementsArr.length == 0) {

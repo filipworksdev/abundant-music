@@ -1132,6 +1132,10 @@ class PropertyInfoProvider {
             case "SongParameters":
                 result.addPropertyInfo(this.createDefaultLikelihoodPropertyInfo("minorScaleLikelihood", "Minor Scale Likelihood", 1.0));
                 result.addPropertyInfo(this.createDefaultLikelihoodPropertyInfo("majorScaleLikelihood", "Major Scale Likelihood", 1.0));
+                result.addPropertyInfo(this.createDefaultLikelihoodPropertyInfo("harmonicMinorScaleLikelihood", "Harmonic Minor Scale Likelihood", 0.0));
+                result.addPropertyInfo(this.createDefaultLikelihoodPropertyInfo("melodicMinorScaleLikelihood", "Melodic Minor Scale Likelihood", 0.0));
+                result.addPropertyInfo(this.createDefaultLikelihoodPropertyInfo("dorianScaleLikelihood", "Dorian Scale Likelihood", 0.0));
+                result.addPropertyInfo(this.createDefaultLikelihoodPropertyInfo("phrygianScaleLikelihood", "Phrygian Scale Likelihood", 0.0));
                 result.addPropertyInfo(this.createDefaultLikelihoodPropertyInfo("timeSignature2Likelihood", "2/4 Time Signature Likelihood", 1.0));
                 result.addPropertyInfo(this.createDefaultLikelihoodPropertyInfo("timeSignature3Likelihood", "3/4 Time Signature Likelihood", 1.0));
                 result.addPropertyInfo(this.createDefaultLikelihoodPropertyInfo("timeSignature4Likelihood", "4/4 Time Signature Likelihood", 3.0));

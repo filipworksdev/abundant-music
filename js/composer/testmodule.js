@@ -3631,7 +3631,11 @@ function createPhraseGroupInfo(rnd, genInfo, module) {
     //    scaleBase = 60;
     const scaleTypeRndInfos = [
         {data: ScaleType.MAJOR, likelihood: genInfo.majorScaleLikelihood},
-        {data: ScaleType.NATURAL_MINOR, likelihood: genInfo.minorScaleLikelihood}
+        {data: ScaleType.NATURAL_MINOR, likelihood: genInfo.minorScaleLikelihood},
+        {data: ScaleType.HARMONIC_MINOR, likelihood: genInfo.harmonicMinorScaleLikelihood},
+        {data: ScaleType.MELODIC_MINOR, likelihood: genInfo.melodicMinorScaleLikelihood},
+        {data: ScaleType.DORIAN, likelihood: genInfo.dorianScaleLikelihood},
+        {data: ScaleType.PHRYGIAN, likelihood: genInfo.phrygianScaleLikelihood}
     ];
     const scaleType = sampleData(scaleTypeRndInfos, scaleRnd); // scaleRnd.random() < 0.5 ? ScaleType.MAJOR : ScaleType.NATURAL_MINOR;
 

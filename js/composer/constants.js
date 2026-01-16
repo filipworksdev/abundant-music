@@ -72,6 +72,8 @@ const ScaleType = {
     PERSIAN: 5,
     DIMINISHED: 6,
     WHOLE_NOTE: 7,
+    DORIAN: 8,
+    PHRYGIAN: 9,
 
     MAJOR_SCALE_STEPS: [ 0, 2, 4, 5, 7, 9, 11 ],
     NATURAL_MINOR_SCALE_STEPS: [ 0, 2, 3, 5, 7, 8, 10 ],
@@ -80,6 +82,8 @@ const ScaleType = {
     PERSIAN_SCALE_STEPS: [ 0, 1, 4, 5, 6, 8, 11 ],
     DIMINISHED_SCALE_STEPS: [ 0, 1, 3, 4, 6, 7, 9, 10 ],
     WHOLE_NOTE_SCALE_STEPS: [ 0, 2, 4, 6, 8, 10 ],
+    DORIAN_SCALE_STEPS: [ 0, 2, 3, 5, 7, 9, 10 ],
+    PHRYGIAN_SCALE_STEPS: [ 0, 1, 3, 5, 7, 8, 10 ],
 
     getChromaticSteps: function(type) {
         switch (type) {
@@ -97,9 +101,27 @@ const ScaleType = {
                 return ScaleType.DIMINISHED_SCALE_STEPS;
             case ScaleType.WHOLE_NOTE:
                 return ScaleType.WHOLE_NOTE_SCALE_STEPS;
+            case ScaleType.DORIAN:
+                return ScaleType.DORIAN_SCALE_STEPS;
+            case ScaleType.PHRYGIAN:
+                return ScaleType.PHRYGIAN_SCALE_STEPS;
             default:
                 return ScaleType.MAJOR_SCALE_STEPS;
         }
+    },
+
+    // Helper for code that historically treated the system as Major vs Minor.
+    // We treat common minor-family and minor-mode scales as "minor".
+    isMinorMode: function(type) {
+        switch (type) {
+            case ScaleType.NATURAL_MINOR:
+            case ScaleType.HARMONIC_MINOR:
+            case ScaleType.MELODIC_MINOR:
+            case ScaleType.DORIAN:
+            case ScaleType.PHRYGIAN:
+                return true;
+        }
+        return false;
     },
 
     toString: function(type) {
@@ -120,11 +142,15 @@ const ScaleType = {
                 return "Diminished";
             case ScaleType.WHOLE_NOTE:
                 return "Whole note";
+            case ScaleType.DORIAN:
+                return "Dorian";
+            case ScaleType.PHRYGIAN:
+                return "Phrygian";
         }
         return "Unknown scale type " + type;
     }
 };
-addPossibleValuesFunction(ScaleType, ScaleType.CUSTOM, ScaleType.WHOLE_NOTE);
+addPossibleValuesFunction(ScaleType, ScaleType.CUSTOM, ScaleType.PHRYGIAN);
 
 const IndexType = {
     MIDI_NOTE: 0,

@@ -402,7 +402,7 @@ class PhraseHarmonyElement extends PlannedHarmonyElement {
 
         const raiseLeadingTone = getValueOrExpressionValue(this, "raiseLeadingTone", module);
 
-        const isMinor = theScaleType == ScaleType.NATURAL_MINOR;
+        const isMinor = ScaleType.isMinorMode(theScaleType);
 
         let replan = true;
         let didReplan = false;
@@ -507,7 +507,7 @@ class PhraseHarmonyElement extends PlannedHarmonyElement {
                     skipInitialTonic = true;
                     skipTonicCadence = true;
                     skipDominant = true;
-                    const modTarget = theScaleType == ScaleType.NATURAL_MINOR ? theMinorModulationTarget : theMajorModulationTarget;
+                    const modTarget = ScaleType.isMinorMode(theScaleType) ? theMinorModulationTarget : theMajorModulationTarget;
                     const newScaleBaseNote = che.getAbsoluteNoteFromScaleIndex(modTarget + 1);
                     // Modulate by changing the scale mode and the scale base note
                     chromaticChangeChordRootCost = 20;
@@ -857,7 +857,7 @@ class PhraseHarmonyElement extends PlannedHarmonyElement {
                     if (doModulate) {
 
                         const che = new ConstantHarmonyElement().setBaseNote(theScaleBaseNote).setScaleType(theScaleType);
-                        const modTarget = theScaleType == ScaleType.NATURAL_MINOR ? theMinorModulationTarget : theMajorModulationTarget;
+                        const modTarget = ScaleType.isMinorMode(theScaleType) ? theMinorModulationTarget : theMajorModulationTarget;
 
                         const newScaleBaseNote = che.getAbsoluteNoteFromScaleIndex(modTarget + 1);
                         const newScaleType = DynamicHarmonyModulationTarget.getScaleType(theScaleType, modTarget);
@@ -1241,7 +1241,7 @@ class PhraseHarmonyElement extends PlannedHarmonyElement {
 
                 // Find the leading note for the modulation target
                 const che = new ConstantHarmonyElement().setBaseNote(theScaleBaseNote).setScaleType(theScaleType);
-                const modTarget = theScaleType == ScaleType.NATURAL_MINOR ? theMinorModulationTarget : theMajorModulationTarget;
+                const modTarget = ScaleType.isMinorMode(theScaleType) ? theMinorModulationTarget : theMajorModulationTarget;
 
                 const newScaleBaseNote = che.getAbsoluteNoteFromScaleIndex(modTarget + 1);
                 const newScaleType = DynamicHarmonyModulationTarget.getScaleType(theScaleType, modTarget);

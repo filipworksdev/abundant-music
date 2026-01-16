@@ -109,6 +109,11 @@ class GenInfo {
         this.timeSignature4Likelihood = 3.0; //
         this.minorScaleLikelihood = 1; //
         this.majorScaleLikelihood = 1; //
+        // Additional scale types (defaults keep legacy behavior: mostly Major/Natural minor)
+        this.harmonicMinorScaleLikelihood = 0;
+        this.melodicMinorScaleLikelihood = 0;
+        this.dorianScaleLikelihood = 0;
+        this.phrygianScaleLikelihood = 0;
         this.setScaleBaseNote = false;
         this.scaleBaseNote = 60;
         this.raiseLeadingInMinorProbabilities = [0.5]; // : harmonyExtra, se ovan

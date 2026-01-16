@@ -430,7 +430,7 @@ class StaticHarmonyGenerator extends HarmonyGenerator {
             nextCosts.push(this.auxiliaryToBaseCost);
         }
         if (this.auxiliaryToNeighbourLikelihood > 0 && currentHarmony.chordInversions == 0) {
-            const isMinor = currentHarmony.scaleType == ScaleType.NATURAL_MINOR;
+            const isMinor = ScaleType.isMinorMode(currentHarmony.scaleType);
             const neighbourChordRoots = isMinor ? this.minorNeighbourChordRoots : this.majorNeighbourChordRoots;
             const neighbourChordInversions = isMinor ? this.minorNeighbourChordInversions : this.majorNeighbourChordInversions;
             const neighbourSusChordRoots = isMinor ? this.minorNeighbourSusChordRoots : this.majorNeighbourSusChordRoots;
